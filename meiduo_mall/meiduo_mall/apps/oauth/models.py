@@ -20,10 +20,10 @@ class OAuthQQUser(BaseModel):
         verbose_name_plural = verbose_name
 
 
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/gq
+# <<<<<<< HEAD
+#
+# =======
+# >>>>>>> origin/gq
 class OAuthSinaUser(BaseModel):
     """
     Sina登录用户数据
@@ -35,7 +35,7 @@ class OAuthSinaUser(BaseModel):
         db_table = 'tb_oauth_sina'
         verbose_name = 'sina登录用户数据'
         verbose_name_plural = verbose_name
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/gq
+# <<<<<<< HEAD
+#
+# =======
+# >>>>>>> origin/gq
