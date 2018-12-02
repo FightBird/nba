@@ -101,8 +101,8 @@ DATABASES = {
      'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'meiduo_mall',
-        'USER': 'meiduo',
-        'PASSWORD': 'meiduo',
+        'USER': 'root',
+        'PASSWORD': 'mysql',
         'HOST':'127.0.0.1',
         'PORT':'3306'
     }
@@ -180,6 +180,13 @@ CACHES = {
     "cart": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": "redis://127.0.0.1:6379/4",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    },
+    "verify_codes": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/5",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }

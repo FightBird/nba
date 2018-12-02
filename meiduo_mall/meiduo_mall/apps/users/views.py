@@ -8,11 +8,20 @@ from rest_framework_jwt.views import ObtainJSONWebToken
 from celery_tasks.sms_code.tasks import send_sms_code
 from goods.models import SKU
 from goods.serializers import SKUListSerializers
+from meiduo_mall.utils.captcha.captcha import captcha
 from users.models import User
 from users.serializers import UserSerializers, UserDetailSerializer, EmailSerializer, AddUserBrowsingHistorySerializer
 from rest_framework.permissions import IsAuthenticated
 from itsdangerous import TimedJSONWebSignatureSerializer as TJS
 from users.utils import merge_cart_cookie_to_redis
+# 导入rest_framework中的基层视图APIView,继承与django的View
+from rest_framework.views import APIView
+# 导入数据库链接
+from django_redis import get_redis_connection
+# 导入响应
+from django.http import HttpResponse
+# 导入常量文件
+from . import constants
 
 
 # 发送短信
@@ -153,42 +162,60 @@ class UserAuthorizeView(ObtainJSONWebToken):
         return response
 
 
-# 忘记密码重置
-class ForgorPasswordView(APIView):
-    # 从前端获取用户名
-    def get(self, request, username):
-        count = User.objects.filter(username=username).count()
-        return Response({
-            'username': username,
-            'count': count
-        })
+# # 忘记密码重置
+# class ForgorPasswordView(APIView):
+#     # 从前端获取用户名
+#     def get(self, request, username):
+#         count = User.objects.filter(username=username).count()
+#         return Response({
+#             'username': username,
+#             'count': count
+#         })
+#
+#     # 2.
+#     # 从前端获取用户名，图片验证码
+#     # 3.
+#     # 验证成功，根据用户名查询手机号，返回给前端，并跳转至发送短信页面；查询失败，返回用户名不存在或验证码错误
+#     # 4.
+#     # 点击生成短信验证码
+#     # 5.
+#     # 短信验证码存入redis数据库
+#     # 6.
+#     # 前端获取短信验证码
+#     # 7.
+#     # 和redis中的短信验证码进行比对
+#     # 8.
+#     # 比对失败，返回结果
+#     # 9.
+#     # 比对成功，进入下一步
+#     # 10.
+#     # 从前端获取新密码new_password和确认密码new_password2
+#     # 11.
+#     # 验证密码格式是否正确及两次密码是否一致
+#     # 12.
+#     # 验证失败返回结果
+#     # 13.
+#     # 验证成功保存至MySQL数据库，返回结果，跳转登录页面
 
 
 
+# Create your views here.
+# 创建获取图片验证码视图,在redis中存放图片验证码信息
+# GET /image_codes/(?P<image_code_id>[\w-]+)/
 
 
+class ImageCodeView(APIView):
+    # 图片验证码
+    def get(self, request, image_code_id):
 
-    # 2.
-    # 从前端获取用户名，图片验证码
-    # 3.
-    # 验证成功，根据用户名查询手机号，返回给前端，并跳转至发送短信页面；查询失败，返回用户名不存在或验证码错误
-    # 4.
-    # 点击生成短信验证码
-    # 5.
-    # 短信验证码存入redis数据库
-    # 6.
-    # 前端获取短信验证码
-    # 7.
-    # 和redis中的短信验证码进行比对
-    # 8.
-    # 比对失败，返回结果
-    # 9.
-    # 比对成功，进入下一步
-    # 10.
-    # 从前端获取新密码new_password和确认密码new_password2
-    # 11.
-    # 验证密码格式是否正确及两次密码是否一致
-    # 12.
-    # 验证失败返回结果
-    # 13.
-    # 验证成功保存至MySQL数据库，返回结果，跳转登录页面
+        # 生成验证码图片
+        name, text, image = captcha.generate_captcha()
+
+        redis_conn = get_redis_connection("verify_codes")
+        redis_conn.setex("img_%s" % image_code_id, constants.IMAGE_CODE_REDIS_EXPIRES, text)
+
+        # 固定返回验证码图片数据，不需要REST framework框架的Response帮助我们决定返回响应数据的格式
+        # 所以此处直接使用Django原生的HttpResponse即可
+        return HttpResponse(image, content_type="image/jpg")
+
+
