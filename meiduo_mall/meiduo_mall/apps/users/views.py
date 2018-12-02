@@ -1,6 +1,6 @@
 from django.conf import settings
 from rest_framework.views import APIView
-from rest_framework.generics import CreateAPIView, RetrieveAPIView, UpdateAPIView, GenericAPIView
+from rest_framework.generics import CreateAPIView, RetrieveAPIView, UpdateAPIView, GenericAPIView,ListAPIView
 from random import randint
 from django_redis import get_redis_connection
 from rest_framework.response import Response
@@ -192,3 +192,7 @@ class ForgorPasswordView(APIView):
     # 验证失败返回结果
     # 13.
     # 验证成功保存至MySQL数据库，返回结果，跳转登录页面
+
+
+
+
