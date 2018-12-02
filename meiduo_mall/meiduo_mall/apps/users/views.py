@@ -13,7 +13,11 @@ from users.serializers import UserSerializers, UserDetailSerializer, EmailSerial
 from rest_framework.permissions import IsAuthenticated
 from itsdangerous import TimedJSONWebSignatureSerializer as TJS
 from users.utils import merge_cart_cookie_to_redis
+from django import forms
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, get_object_or_404
 
+from django.contrib import auth
 
 # 发送短信
 class SmsCodeView(APIView):
@@ -153,42 +157,24 @@ class UserAuthorizeView(ObtainJSONWebToken):
         return response
 
 
-# 忘记密码重置
-class ForgorPasswordView(APIView):
-    # 从前端获取用户名
-    def get(self, request, username):
-        count = User.objects.filter(username=username).count()
-        return Response({
-            'username': username,
-            'count': count
-        })
+class ResetPasswordView(APIView):
+
+    def put(self,request,user_id):
+        data = request.data
+        password = data['password']
+        password2 = data['password2']
+        old_password = data['old_password']
+        try:
+            user = User.objects.get(id=user_id)
+        except:
+            return Response({'查询数据库错误'})
+
+        flag = user.check_password(old_password)
+        if flag == False:
+            return Response({'密码错误'})
+
+        user.set_password(password2)
+        user.save()
+        return Response({'OK'})
 
 
-
-
-
-
-    # 2.
-    # 从前端获取用户名，图片验证码
-    # 3.
-    # 验证成功，根据用户名查询手机号，返回给前端，并跳转至发送短信页面；查询失败，返回用户名不存在或验证码错误
-    # 4.
-    # 点击生成短信验证码
-    # 5.
-    # 短信验证码存入redis数据库
-    # 6.
-    # 前端获取短信验证码
-    # 7.
-    # 和redis中的短信验证码进行比对
-    # 8.
-    # 比对失败，返回结果
-    # 9.
-    # 比对成功，进入下一步
-    # 10.
-    # 从前端获取新密码new_password和确认密码new_password2
-    # 11.
-    # 验证密码格式是否正确及两次密码是否一致
-    # 12.
-    # 验证失败返回结果
-    # 13.
-    # 验证成功保存至MySQL数据库，返回结果，跳转登录页面
