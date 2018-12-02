@@ -132,4 +132,14 @@ class OrderSaveSerializer(serializers.ModelSerializer):
                 return order
 
 
+class OrderGoodsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrderGoods
+        fields = '__all__'
+
+    def validate_orderid(self, orderid):
+
+        pass
+
+
 

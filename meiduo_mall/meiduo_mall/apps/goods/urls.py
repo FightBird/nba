@@ -5,6 +5,7 @@ from rest_framework.routers import DefaultRouter
 urlpatterns = [
     url(r'^categories/(?P<pk>\d+)/$', views.CategoriesView.as_view()),
     url(r'^categories/(?P<pk>\d+)/skus/$', views.SkuListView.as_view()),
+    url(r'^orders/$', views.OrdersListView.as_view()),
 
 ]
 router = DefaultRouter()

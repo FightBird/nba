@@ -10,6 +10,9 @@ from goods.utils import PageNum
 
 
 # 面包屑导航分类获取
+from orders.models import OrderInfo
+
+
 class CategoriesView(APIView):
     def get(self, request, pk):
         # 查询3级分类
@@ -51,5 +54,11 @@ class SKUSearchViewSet(HaystackViewSet):
     serializer_class = SKUSearchSerializers
     pagination_class = PageNum
 
+class OrdersListView(ListAPIView):
+    
+    def get_queryset(self):
+        user = self.request.user
+        order = OrderInfo.objects.filter(user=user)
+        return order
 
 
