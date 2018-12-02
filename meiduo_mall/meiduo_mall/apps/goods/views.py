@@ -5,11 +5,14 @@ from goods.models import GoodsCategory
 from rest_framework.generics import ListAPIView
 from goods.models import SKU
 from rest_framework.filters import OrderingFilter
-from goods.serializers import SKUListSerializers, SKUSearchSerializers
+from goods.serializers import SKUListSerializers, SKUSearchSerializers, UserOrderSerializer
 from goods.utils import PageNum
 
 
 # 面包屑导航分类获取
+from orders.models import OrderInfo
+
+
 class CategoriesView(APIView):
     def get(self, request, pk):
         # 查询3级分类
@@ -52,4 +55,11 @@ class SKUSearchViewSet(HaystackViewSet):
     pagination_class = PageNum
 
 
+class UserOrderView(ListAPIView):
+    pagination_class = PageNum
+    serializer_class = UserOrderSerializer
 
+    def get_queryset(self):
+        user = self.request.user
+        order = OrderInfo.objects.filter(user=user)
+        return order

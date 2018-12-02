@@ -6,6 +6,9 @@ from goods.search_indexes import SKUIndex
 
 
 # 显示所有当前商品的所有数据
+from orders.models import OrderGoods, OrderInfo
+
+
 class SKUListSerializers(serializers.ModelSerializer):
     class Meta:
         model = SKU
@@ -21,3 +24,16 @@ class SKUSearchSerializers(HaystackSerializer):
         index_classes = [SKUIndex]
         fields = ('text', 'object')
 
+
+class OrderGoodsSerializer(serializers.ModelSerializer):
+    sku = SKUListSerializers(read_only=True)
+    class Meta:
+        model = OrderGoods
+        fields = "__all__"
+
+
+class UserOrderSerializer(serializers.ModelSerializer):
+    skus = OrderGoodsSerializer(read_only=True,many=True)
+    class Meta:
+        model = OrderInfo
+        fields = "__all__"
