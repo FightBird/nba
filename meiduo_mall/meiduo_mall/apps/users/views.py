@@ -241,6 +241,7 @@ class ImageCodeMobileView(APIView):
             'access_token':user.id
         })
 
+
 class SmsCodeMobileView(APIView):
     def get(self, request):
         # 获取access_token
@@ -290,6 +291,44 @@ class VerifySmsCodeView(APIView):
             'access_token':user.id,
         })
 
-#
-# class UpdatePasswordView(APIView):
-#     def post(self, request, username):
+
+class UpdatePasswordView(APIView):
+    def post(self, request, username):
+        try:
+            user = User.objects.get(username=username)
+        except:
+            return Response({
+                'message':'用户不存在'
+            })
+        # 获取前端数据
+        password = request.data.get('password')
+        password2 = request.data.get('password2')
+        access_token = request.data.get('access_token')
+
+        if not access_token:
+            return Response({'message':'access_token参数不足'}, status=400)
+        if password != password2:
+            return Response({'message':'密码不一致'})
+
+        # 更新数据
+        user.set_password(password)
+        user.save()
+        return Response({'message':'ok'})
+
+class ResetPasswordView(APIView):
+    def put(self, request):
+        old_password = request.data.get('old_password')
+        password = request.data.get('password')
+        password2 = request.data.get('password2')
+
+        # 获取user
+        user = request.user
+        # 比较old_password 和 元密码是否相同
+        if not user.check_password(old_password):
+            return Response({'message':'原始密码不正确'}, status=404)
+        if password != password2:
+            return Response({'message':'两次密码不一致'}, status=404)
+        # 保存密码
+        user.set_password(password)
+        user.save()
+        return Response({'message':'ok'})

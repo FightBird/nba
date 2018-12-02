@@ -20,7 +20,8 @@ urlpatterns = [
     url(r'^accounts/(?P<username>\w+)/sms/token/$', views.ImageCodeMobileView.as_view()),
     url(r'^accounts/(?P<username>\w+)/password/token/$', views.VerifySmsCodeView.as_view()),
     url(r'^sms_code/$', views.SmsCodeMobileView.as_view()),
-
+    url(r'^users/(?P<username>\w+)/password/$', views.UpdatePasswordView.as_view()),
+    url(r'^users/(?P<user_id>\w+)/passwords/$', views.ResetPasswordView.as_view()),
 ]
 
 
