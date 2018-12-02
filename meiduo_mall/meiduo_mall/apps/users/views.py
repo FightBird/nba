@@ -248,9 +248,9 @@ class SmsCodeMobileView(APIView):
         try:
             user = User.objects.get(id=access_token)
         except:
-            return Response({"error":'手机号不存在'}, status=404)
+            return Response({"error":'用户不存在'}, status=404)
         mobile = user.mobile
-        # 1.获取手机号，进行正则匹配
+
         conn = get_redis_connection('sms_code')
         # 先判断是否间隔了1分钟
         flag = conn.get('sms_code_flag_%s' % mobile)
@@ -262,12 +262,34 @@ class SmsCodeMobileView(APIView):
         # 3. 保存验证码到redis
         pl = conn.pipeline()
         # 通过管道将2个相同操作进行整合，只需要连接一次redis
-        pl.setex('sms_code_%s'%mobile, 300, sms_code)
+        pl.setex('sms_code_%s' % mobile, 300, sms_code)
         # 设置一个条件判断是否为1分钟后再次发送
-        pl.setex('sms_code_flag_%s' %mobile, 60, 'a')
+        pl.setex('sms_code_flag_%s' % mobile, 60, 'a')
         pl.execute()
-        # 4.发送验证码
 
         send_sms_code.delay(mobile, sms_code)
         # 5.返回信息
         return Response({'message': 'ok'})
+
+
+class VerifySmsCodeView(APIView):
+    def get(self, request, username):
+        sms_code = request.query_params.get('sms_code')
+        try:
+            user = User.objects.get(username=username)
+        except:
+            return Response({'message':'用户不存在'}, status=404)
+        mobile = user.mobile
+
+        conn = get_redis_connection('sms_code')
+        real_sms_code = conn.get('sms_code_%s'%mobile)
+        if real_sms_code.decode() != sms_code:
+            return Response({'message':'短信验证码不一致'})
+        return Response({
+            'user_id':user.username,
+            'access_token':user.id,
+        })
+
+#
+# class UpdatePasswordView(APIView):
+#     def post(self, request, username):

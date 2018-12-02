@@ -133,7 +133,7 @@ var vm = new Vue({
                 return;
             }
             this.sending_flag = true;
-            axios.get(this.host+'/sms_codes/?access_token='+ this.access_token, {
+            axios.get(this.host+'/sms_code/?access_token='+ this.access_token, {
                     responseType: 'json'
                 })
                 .then(response => {

@@ -14,8 +14,12 @@ urlpatterns = [
     url(r'^emails/verification/$', views.VerifyEmailView.as_view()),
     url(r'^browse_histories/$', views.UserBrowsingHistoryView.as_view()),
     url(r'^authorizations/$', views.UserAuthorizeView.as_view()),
+
+
     url(r'^image_codes/(?P<image_code_id>[\w-]+)/$', views.ImageCodeView.as_view()),
     url(r'^accounts/(?P<username>\w+)/sms/token/$', views.ImageCodeMobileView.as_view()),
+    url(r'^accounts/(?P<username>\w+)/password/token/$', views.VerifySmsCodeView.as_view()),
+    url(r'^sms_code/$', views.SmsCodeMobileView.as_view()),
 
 ]
 
