@@ -56,7 +56,7 @@ var vm = new Vue({
             if (r != null) {
                 return decodeURI(r[2]);
             }
-            return null;
+            return '/';
         },
         check_pwd: function (){
             var len = this.password.length;

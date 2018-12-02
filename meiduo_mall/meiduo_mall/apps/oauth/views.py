@@ -1,13 +1,17 @@
+from django.http import HttpResponse
 from django.shortcuts import render
+from django_redis import get_redis_connection
 from rest_framework.views import APIView
 from rest_framework.generics import CreateAPIView
 from QQLoginTool.QQtool import OAuthQQ
 from django.conf import settings
 from rest_framework.response import Response
 from rest_framework_jwt.settings import api_settings
-from oauth.models import OAuthQQUser
+
+from meiduo_mall.utils.captcha.captcha import captcha
+from oauth.models import OAuthQQUser, OAuthSinaUser
 from itsdangerous import TimedJSONWebSignatureSerializer as TJS
-from oauth.serializers import OauthSerializer
+from oauth.serializers import OauthSerializer, OauthSinaSerializer
 from oauth.hello import OAuthWb
 from users.models import User
 # 第三方登陆管理视图
@@ -82,11 +86,23 @@ class OauthView(CreateAPIView):
             merge_cart_cookie_to_redis(request, user, response)
             return response
 
+class ImageCodeView(APIView):
 
+    # 图片验证码
+    def get(self, request, image_code_id):
+        # 生成验证码图片
+        name, text, image = captcha.generate_captcha()
+
+        redis_conn = get_redis_connection("image_auth")
+        redis_conn.setex("img_%s" % image_code_id, 300, text)
+
+        # 固定返回验证码图片数据，不需要REST framework框架的Response帮助我们决定返回响应数据的格式
+        # 所以此处直接使用Django原生的HttpResponse即可
+        return HttpResponse(image, content_type="image/jpg")
 
 
 # 构建微博登陆的跳转链接
-from users.utils import merge_cart_cookie_to_redis
+
 
 
 class OauthsinaView(APIView):
@@ -107,8 +123,8 @@ class OauthsinaView(APIView):
 
 class OauthwbView(CreateAPIView):
     # 只继承CreateAPIView的话只需要serializer_class即可
-    # 当执行绑定openid时(post请求),执行序列化器里的方法
-    serializer_class = OauthSerializer
+    # 当执行绑定access_token时(post请求),执行序列化器里的方法
+    serializer_class = OauthSinaSerializer
 
     # 获取openid
     def get(self, request):
@@ -117,7 +133,7 @@ class OauthwbView(CreateAPIView):
         # 3.通过code值获取access_token值,需先建立qq对象
         code = request.GET.get('code', None)
         if not code:
-            return Response({'error': '　缺少code值'})
+            return Response({'error': '　缺少code值'},status=400)
         state = '/'
         sina = OAuthWb(client_id=settings.WB_CLIENT_ID, client_secret=settings.WB_CLIENT_SECRET,
                      redirect_uri=settings.WB_REDIRECT_URI, state=state)
@@ -127,15 +143,15 @@ class OauthwbView(CreateAPIView):
         except Exception:
             return Response({'message': 'QQ服务异常'}, status=503)
 
-        # 判断openid是否绑定
+        # 判断access_token是否绑定
         try:
-            oauth_user = OAuthSinaUser.objects.get(openid=openid)
+            oauth_user = OAuthSinaUser.objects.get(access_token=access_token)
         except Exception:
-            # 捕获到异常说明openid不存在,用户没有绑定过,将openid返回,用于绑定用户身份并进入绑定界面
+            # 捕获到异常说明access_token不存在,用户没有绑定过,将access_token返回,用于绑定用户身份并进入绑定界面
             tjs = TJS(settings.SECRET_KEY, 300)
             # 加密之后为byte类型,要先解码
-            open_id = tjs.dumps({'openid': openid}).decode()
-            return Response({'access_token': open_id})
+            access_token = tjs.dumps({'access_token': access_token}).decode()
+            return Response({'access_token': access_token})
         else:
             user = oauth_user.user
             # 存在则用户登陆成功,跳转到首页,绑定token值
@@ -151,5 +167,6 @@ class OauthwbView(CreateAPIView):
             })
             merge_cart_cookie_to_redis(request, user, response)
             return response
+
 
 

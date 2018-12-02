@@ -62,7 +62,7 @@ var vm = new Vue({
             if (r != null) {
                 return decodeURI(r[2]);
             }
-            return null;
+            return '/';
         },
         // 生成uuid
         generate_uuid: function(){
@@ -84,7 +84,7 @@ var vm = new Vue({
             this.image_code_id = this.generate_uuid();
 
             // 设置页面中图片验证码img标签的src属性
-            this.image_code_url = this.host + "/image_codes/" + this.image_code_id + "/";
+            this.image_code_url = this.host + "/oauth/image_codes/" + this.image_code_id + "/";
         },
         check_pwd: function (){
             var len = this.password.length;
