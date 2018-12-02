@@ -162,6 +162,29 @@ class AddUserBrowsingHistorySerializer(serializers.Serializer):
         return validated_data
 
 
+class UsernameSerializer(serializers.ModelSerializer):
+    image_code = serializers.CharField(min_length=4, max_length=4, read_only=True)
+
+    class Meta:
+        model = User
+        fields = ('mobile', 'image_code')
 
 
+    def validate(self, attrs):
+        # 验证用户名
+        try:
+            User.objects.get(mobile=attrs['mobile'])
+        except:
+            raise serializers.ValidationError('用户名不存在')
 
+        # 验证图片验证码
+        conn = get_redis_connection('verify_codes')
+        # 从redis中取出的数据为byte类型
+        real_image_code = conn.get('verify_codes_%s' % attrs['username'])
+        if not real_image_code:
+            raise serializers.ValidationError('短信验证码过期')
+
+        if real_image_code.decode() != attrs['verify_codes']:
+            raise serializers.ValidationError('验证码错误')
+
+        return attrs

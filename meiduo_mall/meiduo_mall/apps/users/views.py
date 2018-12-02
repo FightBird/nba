@@ -10,7 +10,9 @@ from goods.models import SKU
 from goods.serializers import SKUListSerializers
 from meiduo_mall.utils.captcha.captcha import captcha
 from users.models import User
-from users.serializers import UserSerializers, UserDetailSerializer, EmailSerializer, AddUserBrowsingHistorySerializer
+from users.serializers import UserSerializers, UserDetailSerializer, EmailSerializer, AddUserBrowsingHistorySerializer, \
+    UsernameSerializer
+
 from rest_framework.permissions import IsAuthenticated
 from itsdangerous import TimedJSONWebSignatureSerializer as TJS
 from users.utils import merge_cart_cookie_to_redis
@@ -205,6 +207,7 @@ class UserAuthorizeView(ObtainJSONWebToken):
 
 
 class ImageCodeView(APIView):
+
     # 图片验证码
     def get(self, request, image_code_id):
 
@@ -212,10 +215,59 @@ class ImageCodeView(APIView):
         name, text, image = captcha.generate_captcha()
 
         redis_conn = get_redis_connection("verify_codes")
-        redis_conn.setex("img_%s" % image_code_id, constants.IMAGE_CODE_REDIS_EXPIRES, text)
+        redis_conn.setex("image_code_%s" % image_code_id, constants.IMAGE_CODE_REDIS_EXPIRES, text)
 
         # 固定返回验证码图片数据，不需要REST framework框架的Response帮助我们决定返回响应数据的格式
         # 所以此处直接使用Django原生的HttpResponse即可
         return HttpResponse(image, content_type="image/jpg")
 
 
+class ImageCodeMobileView(APIView):
+    def get(self, request, username):
+        image_code = request.query_params.get('text')
+        uuid = request.query_params.get('image_code_id')
+        # 根据username查询当前用户
+        try:
+            user = User.objects.get(username=username)
+        except:
+            return Response({'message':'用户不存在'}, status=404)
+
+        conn = get_redis_connection('verify_codes')
+        real_image_code = conn.get('image_code_%s'%uuid)
+        if real_image_code.decode().lower() != image_code.lower():
+            return Response({'message':'验证码不正确'}, status=400)
+        return Response({
+            'mobile':user.mobile,
+            'access_token':user.id
+        })
+
+class SmsCodeMobileView(APIView):
+    def get(self, request):
+        # 获取access_token
+        access_token = request.query_params.get('access_token')
+        try:
+            user = User.objects.get(id=access_token)
+        except:
+            return Response({"error":'手机号不存在'}, status=404)
+        mobile = user.mobile
+        # 1.获取手机号，进行正则匹配
+        conn = get_redis_connection('sms_code')
+        # 先判断是否间隔了1分钟
+        flag = conn.get('sms_code_flag_%s' % mobile)
+        if flag:
+            return Response({'error': '请求过于频繁'}, status=400)
+        # 2.生成验证码
+        sms_code = '%06d' % randint(0, 999999)
+        print(sms_code)
+        # 3. 保存验证码到redis
+        pl = conn.pipeline()
+        # 通过管道将2个相同操作进行整合，只需要连接一次redis
+        pl.setex('sms_code_%s'%mobile, 300, sms_code)
+        # 设置一个条件判断是否为1分钟后再次发送
+        pl.setex('sms_code_flag_%s' %mobile, 60, 'a')
+        pl.execute()
+        # 4.发送验证码
+
+        send_sms_code.delay(mobile, sms_code)
+        # 5.返回信息
+        return Response({'message': 'ok'})
