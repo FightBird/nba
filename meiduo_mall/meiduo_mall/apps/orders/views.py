@@ -43,29 +43,91 @@ class OrderSaveView(CreateAPIView):
     serializer_class = OrderSaveSerializer
 
 
-class OrdersUncommentGoodsView(ListAPIView):
+class OrdersUncommentGoodsView(APIView):
 
-    def get_queryset(self):
+    def get(self,request,order_id):
         # 1、获取前端数据  order_id 正则匹配
-        pk = self.kwargs['pk']
+        # pk = self.kwargs['order_id']
         # 2、校验数据 order_id订单是否存在 不存再返回
         # SKU.objects.filter(category_id=pk)
         try:
-            order = OrderInfo.objects.filter(order_id=pk)
+            order = OrderInfo.objects.filter(order_id=order_id)
         except:
             return Response({'error':'订单不存在'},status=400)
         # 3、判断用户登录状态 /待定，进入个人中心查看订单，此时已经登录无需验证
+        """
+            # 获取前端传入的token
+        # token = request.query_params.get('token')
+        # if not token:
+        #     return Response({'error': '缺少token'}, status=400)
+        # tjs = TJS(settings.SECRET_KEY, 300)
+        # try:
+        #     # 检查token
+        #     data = tjs.loads(token)
+        # except Exception:
+        #     return Response({'errors': '无效token'}, status=400)
+        """
         # 4、根据order_id查询订单下的商品信息列表，根据信息列表获取单个商品id查询数据库
         try:
-            skus = OrderGoods.objects.filter(order=pk)
+            skus = OrderGoods.objects.filter(order_id=order_id)
         except:
             return Response({'error':'订单为空'},status=400)
         # 5、结果返回  {skus = skus}
+        skus_list = []
+        for sku in skus:
+            data = {
+                'sku':sku.order_id,
+                'price':sku.price,
+                'default_image_url':sku.sku.default_image_url,
+                'score':sku.score,
+                'name':sku.sku.name,
+                'id':sku.sku_id
+            }
+
+        return Response(data=skus_list)
+    def post(self,request,atts):
+
+        # 1、获取前端数据 order_id/sku.id/sku.comment/sku.final_score/sku.is_anonymous/token
+        order_id = atts['order']
+        sku_id = atts['sku']
+        comment = atts['comment']
+        final_score = atts['score']
+        is_anonymous = atts['is_anonymous']
+
+        # sku: sku.sku.id,
+        # comment: sku.comment,
+        # score: sku.final_score,
+        # is_anonymous: sku.is_anonymous,
+        # 2、验证数据
+            # 判断用户是否登录
+            # order_id查询数据库判断订单是否存在
+            # sku.id查询数据库该订单 # 下是否有这商品
+        goods = OrderGoods.objects.filter(order_id=order_id)
+        flag = 0
+        for good in goods:
+            if good.order_id==order_id:
+                flag = 1
+                break
+        if flag==0:
+            return Response({'error':'商品不存在'})
+        # 3、业务逻辑
+        # 向数据库保存数据
+        for good in goods:
+            good.comment = comment
+        # 对应订单商品信息表
+        # 待定
+        # 4、结果返回
+        # ok
         return Response({
-            'skus':skus
+            'message':'ok'
         })
 
 
+        pass
+
+class OrderscommentGoodsView(CreateAPIView):
+    def post(self, request, *args, **kwargs):
+        pass
 
 """
         def get(self, request):
