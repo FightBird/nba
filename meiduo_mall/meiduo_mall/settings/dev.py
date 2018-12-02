@@ -100,9 +100,9 @@ WSGI_APPLICATION = 'meiduo_mall.wsgi.application'
 DATABASES = {
      'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'django_deve',
-        'USER': 'root',
-        'PASSWORD': 'mysql',
+        'NAME': 'meiduo_mall',
+        'USER': 'meiduo',
+        'PASSWORD': 'meiduo',
         'HOST':'127.0.0.1',
         'PORT':'3306'
     }
@@ -325,7 +325,7 @@ CKEDITOR_UPLOAD_PATH = ''  # 上传图片保存路径，使用了FastDFS，所�
 #
 CRONJOBS = [
     # 每5分钟执行一次生成主页静态文件
-    ('*/5 * * * *', 'contents.crons.generate_static_index_html', '>> /home/python/Desktop/meiduo_mall/meiduo_mall33/meiduo_mall/logs/meiduo.log')
+    ('*/5 * * * *', 'contents.crons.generate_static_index_html', '>> /home/python/Desktop/nba/meiduo_mall/logs/meiduo.log')
 ]
 
 
@@ -334,7 +334,7 @@ HAYSTACK_CONNECTIONS = {
     # ENGINE为选用搜索引擎,可以更换
     'default': {
         'ENGINE': 'haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine',
-        'URL': 'http://192.168.57.128:9200/',  # 此处为elasticsearch运行的服务器ip地址，端口号固定为9200
+        'URL': 'http://192.168.5.148:9200/',  # 此处为elasticsearch运行的服务器ip地址，端口号固定为9200
         'INDEX_NAME': 'meiduo',  # 指定elasticsearch建立的索引库的名称
     },
 }
